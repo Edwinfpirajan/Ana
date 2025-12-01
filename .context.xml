@@ -1,0 +1,97 @@
+<context>
+<project name="AnaStreamer" language="Go" version="1.22+">
+  <description>
+    Asistente de voz 100% local para streamers. Escucha comandos de voz,
+    los interpreta con LLM, y ejecuta acciones en Twitch, OBS y música.
+  </description>
+  
+  <stack>
+    <stt options="whisper.cpp (local), OpenAI Whisper (cloud)"/>
+    <llm options="Ollama (local), OpenAI GPT (cloud)"/>
+    <tts options="Piper (local), OpenAI TTS (cloud)"/>
+    <integrations>Twitch Helix API, OBS WebSocket 5.x</integrations>
+  </stack>
+
+  <structure>
+    <dir path="cmd/ana/">Entry point (main.go)</dir>
+    <dir path="internal/config/">YAML configuration structs and loader</dir>
+    <dir path="internal/stt/">Speech-to-Text providers</dir>
+    <dir path="internal/llm/">Language Model providers + Action struct</dir>
+    <dir path="internal/tts/">Text-to-Speech providers</dir>
+    <dir path="internal/brain/">Central orchestrator</dir>
+    <dir path="internal/executor/">Action executors (twitch/, obs/, music/)</dir>
+    <dir path="internal/pipeline/">Audio processing pipeline</dir>
+    <dir path="internal/audio/" status="PENDING">Audio capture, VAD, wake word</dir>
+    <dir path="internal/hotkey/" status="PENDING">Global hotkeys</dir>
+    <dir path="internal/ui/" status="PENDING">System tray, notifications</dir>
+    <dir path="pkg/logger/">Structured logging (zerolog)</dir>
+    <dir path="pkg/utils/">Utilities (audio, json, process)</dir>
+  </structure>
+
+  <interfaces>
+    <interface name="stt.Provider">
+      <method>Transcribe(ctx, audio []byte) (*TranscriptionResult, error)</method>
+      <method>TranscribeFile(ctx, path string) (*TranscriptionResult, error)</method>
+      <implementations>WhisperProvider, OpenAISTTProvider</implementations>
+    </interface>
+    
+    <interface name="llm.Provider">
+      <method>Complete(ctx, prompt string) (Action, error)</method>
+      <implementations>OllamaProvider, OpenAIProvider</implementations>
+    </interface>
+    
+    <interface name="tts.Provider">
+      <method>Speak(ctx, text string) error</method>
+      <method>Synthesize(ctx, text string) ([]byte, error)</method>
+      <implementations>PiperProvider, OpenAITTSProvider</implementations>
+    </interface>
+    
+    <interface name="executor.Executor">
+      <method>Execute(ctx, action Action) (Result, error)</method>
+      <method>CanHandle(action string) bool</method>
+      <implementations>TwitchExecutor, OBSExecutor, MusicExecutor</implementations>
+    </interface>
+  </interfaces>
+
+  <actions>
+    <group name="twitch">clip, title, category, ban, timeout, unban</group>
+    <group name="obs">scene, source.show, source.hide, volume, mute, unmute, text</group>
+    <group name="music">play, pause, resume, next, previous, volume, stop</group>
+    <group name="system">status, help, none</group>
+  </actions>
+
+  <action_format>
+    {"action": "twitch.clip", "params": {"duration": 30}, "reply": "Creando clip..."}
+  </action_format>
+
+  <conventions>
+    <rule>Error wrapping: fmt.Errorf("failed to X: %w", err)</rule>
+    <rule>Logging: logger.Component("name").Info().Msg("...")</rule>
+    <rule>Context: Always first parameter</rule>
+    <rule>Constructors: New...() pattern</rule>
+    <rule>Files: snake_case.go</rule>
+  </conventions>
+
+  <dependencies>
+    github.com/gorilla/websocket    (OBS WebSocket)
+    github.com/rs/zerolog           (Logging)
+    github.com/spf13/viper          (Configuration)
+    github.com/go-resty/resty/v2    (HTTP client)
+  </dependencies>
+
+  <pending_work>
+    <module path="internal/audio/">PortAudio capture, VAD, wake word detection</module>
+    <module path="internal/hotkey/">golang.design/x/hotkey for global shortcuts</module>
+    <module path="internal/ui/">System tray with systray library</module>
+    <feature>Complete Twitch OAuth PKCE flow</feature>
+    <feature>Unit tests for all modules</feature>
+  </pending_work>
+</project>
+</context>
+
+<!-- 
+USO DE ESTE ARCHIVO:
+1. Copia todo el contenido y pégalo al inicio de tu conversación con Claude/ChatGPT
+2. O referencia este archivo cuando trabajes en el proyecto
+3. Actualiza <pending_work> conforme avances
+-->

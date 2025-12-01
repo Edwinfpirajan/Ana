@@ -1,0 +1,58 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Keep Ana executable
+!ana.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config with secrets
+config/ana.config.yaml
+.env
+.env.local
+
+# Data directory
+data/
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Large model files - download separately
+assets/models/**/*.bin
+assets/voices/piper/**/*.onnx
+assets/voices/piper/**/*.json
+
+# But keep directory structure
+!assets/.gitkeep
+!assets/models/.gitkeep
+!assets/voices/piper/.gitkeep
+
+# Audio recordings
+*.wav
+*.mp3
+*.ogg
+*.flac
+
+# Build artifacts
+dist/
+release/
+
+# Go
+go.sum

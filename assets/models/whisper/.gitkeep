@@ -1,0 +1,2 @@
+# This directory contains downloaded Whisper models
+# Download with: make download-whisper

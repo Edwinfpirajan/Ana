@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"c:\\Program Files\\Go\\bin\\go.exe\" build:*)",
+      "Bash(\"c:\\Program Files\\Go\\bin\\go.exe\" clean -modcache)",
+      "Bash(set CGO_CFLAGS=-I/c/msys64/mingw64/include:*)",
+      "Bash(set CGO_LDFLAGS=-L/c/msys64/mingw64/lib -lportaudio)",
+      "Bash(timeout:*)",
+      "Bash(\"c:\\Program Files\\Go\\bin\\go.exe\" get github.com/gordonklaus/portaudio@v0.0.0-20200830082634-2e31184d3246)",
+      "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"CGO_ENABLED=1 CC=gcc go build -tags portaudio -o ana.exe ./cmd/ana/main.go\")",
+      "Bash(bash -c \"export CGO_ENABLED=1 CC=gcc && /c/Program\\ Files/Go/bin/go build -tags portaudio -o ana.exe ./cmd/ana/main.go\")",
+      "Bash(bash -c:*)",
+      "Bash(tee:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(bash:*)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

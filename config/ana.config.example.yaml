@@ -1,0 +1,150 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#                         ANA STREAMER - CONFIGURACIÓN
+# ═══════════════════════════════════════════════════════════════════════════════
+# Copia este archivo como 'ana.config.yaml' y configura tus valores
+
+general:
+  language: "es"                    # Idioma principal (es, en)
+  log_level: "info"                 # debug, info, warn, error
+  data_dir: "./data"                # Directorio para datos persistentes
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONFIGURACIÓN DE AUDIO
+# ─────────────────────────────────────────────────────────────────────────────
+audio:
+  device: "default"                 # Dispositivo de entrada (usa "default" o el nombre específico)
+  sample_rate: 16000                # Hz - Whisper requiere 16kHz
+  channels: 1                       # Mono
+  chunk_size: 1024                  # Samples por chunk
+
+  vad:
+    enabled: true
+    sensitivity: 0.5                # 0.0 (menos sensible) - 1.0 (más sensible)
+    silence_threshold_ms: 1500      # Milisegundos de silencio para terminar grabación
+    min_speech_ms: 300              # Mínimo de habla para considerar válido
+
+  wake_word:
+    enabled: true
+    word: "ana"
+    threshold: 0.7                  # Confianza mínima (0.0 - 1.0)
+    # Alternativas: "hey ana", "oye ana", "computadora"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HOTKEY - Push to Talk
+# ─────────────────────────────────────────────────────────────────────────────
+hotkey:
+  enabled: true
+  key: "F4"                         # Tecla para push-to-talk
+  mode: "hold"                      # hold = mientras presiona, toggle = on/off
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STT - Speech to Text (Voz a Texto)
+# ─────────────────────────────────────────────────────────────────────────────
+stt:
+  provider: "whisper"               # whisper (local) | openai (cloud)
+  
+  whisper:
+    binary_path: "./bin/whisper/main.exe"    # Ruta al ejecutable de whisper.cpp
+    model_path: "./assets/models/whisper/ggml-base.bin"
+    language: "es"                  # Código de idioma ISO
+    # Modelos disponibles: tiny, base, small, medium, large
+    # tiny = más rápido, menos preciso
+    # base = balance recomendado
+    # small/medium = más preciso, más lento
+  
+  openai:
+    api_key: "${OPENAI_API_KEY}"    # Usa variable de entorno
+    model: "whisper-1"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LLM - Large Language Model (Interpretación de comandos)
+# ─────────────────────────────────────────────────────────────────────────────
+llm:
+  provider: "auto"                # ollama (local) | openai (cloud) | auto (try local then cloud)
+  
+  ollama:
+    url: "http://localhost:11434"
+    model: "gemma3:4b"              # Modelos recomendados: gemma3:4b, llama3.2:3b, mistral:7b
+    timeout_seconds: 30
+    # Asegúrate de tener Ollama corriendo: ollama serve
+    # Y el modelo descargado: ollama pull llama3.2:3b
+  
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4o-mini"            # gpt-4o-mini es rápido y económico
+    temperature: 0.3                # Bajo para respuestas más determinísticas
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TTS - Text to Speech (Texto a Voz)
+# ─────────────────────────────────────────────────────────────────────────────
+tts:
+  provider: "auto"                 # piper (local) | openai (cloud) | auto (try local then cloud)
+  
+  piper:
+    binary_path: "./bin/piper/piper.exe"      # Ruta al ejecutable de Piper
+    model_path: "./assets/voices/piper/es_ES-davefx-medium.onnx"
+    speed: 1.0                      # 0.5 = lento, 1.0 = normal, 1.5 = rápido
+    # Voces español recomendadas:
+    # - es_ES-davefx-medium (España, masculina)
+    # - es_MX-ald-medium (México, masculina)
+  
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "tts-1"                  # tts-1 (rápido) | tts-1-hd (mejor calidad)
+    voice: "nova"                   # alloy, echo, fable, onyx, nova, shimmer
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TWITCH - Integración con Twitch
+# ─────────────────────────────────────────────────────────────────────────────
+twitch:
+  enabled: true
+  client_id: ""                     # Tu Client ID de Twitch Developer Console
+  client_secret: ""                 # Tu Client Secret
+  redirect_uri: "http://localhost:3000/callback"
+  broadcaster_id: ""                # Tu ID de broadcaster (número)
+  
+  # Estos se llenan automáticamente después de autenticación OAuth
+  access_token: ""
+  refresh_token: ""
+  
+  # Scopes necesarios:
+  # - clips:edit (crear clips)
+  # - channel:manage:broadcast (título, categoría)
+  # - moderator:manage:banned_users (ban, timeout)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OBS - Integración con OBS Studio
+# ─────────────────────────────────────────────────────────────────────────────
+obs:
+  enabled: true
+  url: "ws://localhost:4455"        # URL del WebSocket de OBS
+  password: "123456"                      # Contraseña (dejar vacío si no hay auth)
+  
+  # Para habilitar WebSocket en OBS:
+  # Herramientas > obs-websocket Settings > Enable WebSocket server
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MÚSICA - Reproductor de música local
+# ─────────────────────────────────────────────────────────────────────────────
+music:
+  enabled: true
+  folders:
+    - "./music"                     # Carpetas donde buscar música
+    - "D:/Music/Stream"
+  supported_formats:
+    - ".mp3"
+    - ".wav"
+    - ".ogg"
+    - ".flac"
+  default_volume: 0.5               # 0.0 - 1.0
+  shuffle: false                    # Reproducción aleatoria por defecto
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SONIDOS - Efectos de sonido del sistema
+# ─────────────────────────────────────────────────────────────────────────────
+sounds:
+  enabled: true
+  wake: "./assets/sounds/wake.wav"              # Sonido al detectar wake word
+  error: "./assets/sounds/error.wav"            # Sonido de error
+  start_recording: "./assets/sounds/beep_start.wav"   # Inicio de grabación
+  stop_recording: "./assets/sounds/beep_end.wav"      # Fin de grabación

@@ -1,0 +1,38 @@
+# Windsurf / Codeium Rules - AnaStreamer
+
+## Project Overview
+Go voice assistant for streamers. 100% local-first with optional cloud fallback.
+
+## Stack
+- Go 1.22+
+- STT: Whisper.cpp / OpenAI
+- LLM: Ollama / OpenAI  
+- TTS: Piper / OpenAI
+- Integrations: Twitch Helix API, OBS WebSocket
+
+## Structure
+```
+cmd/ana/main.go
+internal/{config,stt,llm,tts,brain,executor,pipeline}/
+pkg/{logger,utils}/
+```
+
+## Key Interface
+```go
+type Action struct {
+    Action string                 `json:"action"`
+    Params map[string]interface{} `json:"params"`
+    Reply  string                 `json:"reply"`
+}
+```
+
+## Conventions
+- Errors: `fmt.Errorf("context: %w", err)`
+- Logging: `logger.Component("name").Info().Msg("...")`
+- Constructors: `NewXxx(cfg) (*Xxx, error)`
+- Context: First parameter always
+
+## Actions
+twitch.{clip,title,category,ban,timeout,unban}
+obs.{scene,source.show,source.hide,volume,mute,unmute,text}
+music.{play,pause,resume,next,previous,volume,stop}

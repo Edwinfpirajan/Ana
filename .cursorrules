@@ -1,0 +1,138 @@
+# ANA STREAMER - CURSOR RULES
+# ═══════════════════════════════════════════════════════════════════════════════
+# Reglas para el asistente de Cursor AI al trabajar en este proyecto
+# ═══════════════════════════════════════════════════════════════════════════════
+
+You are an expert Go developer working on AnaStreamer, a local voice assistant for streamers.
+
+## Project Overview
+
+AnaStreamer is a 100% local desktop application written in Go that:
+- Listens to voice commands (always-listening with wake word "Ana" or push-to-talk)
+- Transcribes speech using Whisper.cpp (local) or OpenAI Whisper (cloud)
+- Interprets commands using Ollama (local) or OpenAI GPT (cloud)
+- Executes actions: Twitch (clips, title, bans), OBS (scenes, sources), Music playback
+- Responds using Piper TTS (local) or OpenAI TTS (cloud)
+
+## Architecture
+
+```
+cmd/ana/main.go          → Entry point
+internal/config/             → YAML configuration
+internal/stt/                → Speech-to-Text (Whisper, OpenAI)
+internal/llm/                → Language Model (Ollama, OpenAI)
+internal/tts/                → Text-to-Speech (Piper, OpenAI)
+internal/brain/              → Central orchestrator
+internal/executor/           → Action executors (Twitch, OBS, Music)
+internal/pipeline/           → Audio processing pipeline
+pkg/logger/                  → Structured logging (zerolog)
+pkg/utils/                   → Utilities (audio, json, process)
+```
+
+## Key Interfaces
+
+All providers follow this pattern:
+```go
+type Provider interface {
+    Name() string
+    IsAvailable(ctx context.Context) bool
+    Close() error
+    // ... provider-specific methods
+}
+```
+
+Action executors follow:
+```go
+type Executor interface {
+    Name() string
+    SupportedActions() []string
+    CanHandle(action string) bool
+    Execute(ctx context.Context, action llm.Action) (Result, error)
+    IsAvailable() bool
+    Close() error
+}
+```
+
+## Code Conventions
+
+1. **Error handling**: Always wrap errors with context
+   ```go
+   return fmt.Errorf("failed to do X: %w", err)
+   ```
+
+2. **Logging**: Use component-specific loggers
+   ```go
+   log := logger.Component("module-name")
+   log.Info().Str("key", "value").Msg("message")
+   ```
+
+3. **Context**: Always pass context as first parameter
+   ```go
+   func (p *Provider) DoSomething(ctx context.Context, ...) error
+   ```
+
+4. **Configuration**: All config through `*config.Config`
+
+5. **File naming**: snake_case (e.g., `openai_stt.go`)
+
+6. **Constructors**: `New...()` pattern
+   ```go
+   func NewOllamaProvider(cfg config.OllamaConfig) (*OllamaProvider, error)
+   ```
+
+## LLM Action Format
+
+The LLM returns JSON in this format:
+```json
+{
+  "action": "twitch.clip",
+  "params": {"duration": 30},
+  "reply": "Creando clip de 30 segundos"
+}
+```
+
+Available actions:
+- twitch.* : clip, title, category, ban, timeout, unban
+- obs.* : scene, source.show, source.hide, volume, mute, unmute, text
+- music.* : play, pause, resume, next, previous, volume, stop
+- system.* : status, help
+- none : no action, just conversation
+
+## Pending Modules
+
+These modules need implementation:
+1. `internal/audio/` - PortAudio capture, VAD, wake word detection
+2. `internal/hotkey/` - Global system hotkeys (golang.design/x/hotkey)
+3. `internal/ui/` - System tray, notifications
+
+## External Integrations
+
+- **Twitch**: Helix API with OAuth Bearer + Client-ID
+- **OBS**: WebSocket 5.x protocol with SHA256 auth
+- **Ollama**: HTTP API at localhost:11434
+- **Whisper.cpp**: CLI binary execution
+- **Piper**: CLI binary with stdin/stdout
+
+## When Writing Code
+
+1. Follow existing patterns in the codebase
+2. Add proper error handling with wrapped errors
+3. Use structured logging
+4. Support both local and cloud providers when applicable
+5. Keep functions small and focused
+6. Add comments for complex logic
+7. Use meaningful variable names
+8. Handle context cancellation properly
+
+## Testing Commands
+
+```bash
+# Build
+go build -o ana ./cmd/ana
+
+# Run interactive mode
+./ana
+
+# Test a command
+./ana -test -command "crea un clip"
+```
