@@ -1,16 +1,12 @@
 # 🚀 Cómo Ejecutar Ana Streamer
 
-## ⚠️ IMPORTANTE: Usa los scripts de build, NO `go run`
+## ⚠️ IMPORTANTE: Usa SIEMPRE los scripts de build
 
-### ❌ ESTO NO FUNCIONA
-```bash
-go run cmd/ana/main.go
-# Error: "PortAudio build tag is required for audio capture"
-```
+Ana Streamer requiere compilación especial con CGO y build tags. Los scripts de build manejan esto automáticamente.
 
-### ✅ ESTO SÍ FUNCIONA
+### ✅ ESTO SÍ FUNCIONA - Método Recomendado
 
-**En Windows (desde PowerShell o CMD):**
+**En Windows:**
 ```bash
 ./build.bat
 ./ana.exe
@@ -22,24 +18,41 @@ go run cmd/ana/main.go
 ./ana
 ```
 
----
+Los scripts verifican automáticamente:
+- ✅ Go está instalado
+- ✅ PortAudio está disponible
+- ✅ CGO está configurado
+- ✅ Compilación con flags correctos
+- ✅ Genera ejecutable optimizado
 
-## ¿Por qué no funciona `go run`?
-
-Ana Streamer requiere compilación con CGO y el build tag `portaudio` para acceder a la librería de audio PortAudio. Los scripts de build automáticamente configuran esto:
+### ❌ ESTO NO FUNCIONA
 
 ```bash
-go build -tags portaudio -o ana ./cmd/ana/main.go
+# ❌ Error: "PortAudio build tag is required"
+go run cmd/ana/main.go
+
+# ❌ Error: "build constraints exclude all Go files"
+go build -tags portaudio -o ana.exe ./cmd/ana/main.go  # (desde cmd/PowerShell normal)
+
+# ❌ Error: falta CGO
+go build -o ana ./cmd/ana/main.go
 ```
 
-`go run` no soporta los build tags ni la configuración CGO automáticamente.
-
 ---
 
-## Compilación Manual (si lo necesitas)
+## ¿Por qué necesitan scripts especiales?
 
-**Windows (desde MSYS2 MinGW shell):**
+Ana Streamer necesita:
+1. **CGO habilitado** - Para integración con código C
+2. **Compilador GCC** - Para compilar PortAudio
+3. **Build tag `portaudio`** - Para incluir audio capture
+4. **Entorno MSYS2** (Windows) - Para que CGO funcione
+
+Los scripts de build automáticamente configuran todo esto. Si lo haces manualmente, debes estar en MSYS2 MinGW shell:
+
+**Windows (MSYS2 MinGW64 shell - ⚠️ REQUERIDO):**
 ```bash
+# ⚠️ DEBE ejecutarse desde MSYS2 MinGW 64-bit shell
 set CGO_ENABLED=1
 set CC=gcc
 go build -tags portaudio -o ana.exe ./cmd/ana/main.go
@@ -50,6 +63,8 @@ go build -tags portaudio -o ana.exe ./cmd/ana/main.go
 export CGO_ENABLED=1
 go build -tags portaudio -o ana ./cmd/ana/main.go
 ```
+
+Pero es **MUCHO más fácil y más confiable** usar los scripts de build proporcionados.
 
 ---
 
