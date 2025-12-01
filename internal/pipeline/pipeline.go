@@ -268,13 +268,17 @@ func (p *Pipeline) persistentListeningSession(ctx context.Context) {
 			return
 		}
 
-		// Record until silence
+		// Record until silence - this is blocking and waits for audio
+		// Once audio ends with silence, it returns
 		p.startRecording()
 		p.recordUntilSilence(ctx)
+
+		// Process the recorded audio
+		// This will handle deactivation check and state management
 		p.processRecordedAudio(ctx)
 
-		// processRecordedAudio will set state to StateIdle if deactivation detected
-		// Otherwise it will keep us in StateListening for next command
+		// Loop back to record next command
+		// If deactivation was detected, GetState() will be Idle and loop will exit
 	}
 }
 
