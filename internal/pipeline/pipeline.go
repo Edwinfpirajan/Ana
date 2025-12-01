@@ -261,19 +261,20 @@ func (p *Pipeline) persistentListeningSession(ctx context.Context) {
 		case <-p.stopChan:
 			return
 		default:
-			// Check if still in listening state
-			if p.GetState() != StateListening {
-				return
-			}
-
-			// Record until silence
-			p.startRecording()
-			p.recordUntilSilence(ctx)
-			p.processRecordedAudio(ctx)
-
-			// processRecordedAudio will set state to StateIdle if deactivation detected
-			// Otherwise it will keep us in StateListening for next command
 		}
+
+		// Check if still in listening state
+		if p.GetState() != StateListening {
+			return
+		}
+
+		// Record until silence
+		p.startRecording()
+		p.recordUntilSilence(ctx)
+		p.processRecordedAudio(ctx)
+
+		// processRecordedAudio will set state to StateIdle if deactivation detected
+		// Otherwise it will keep us in StateListening for next command
 	}
 }
 
