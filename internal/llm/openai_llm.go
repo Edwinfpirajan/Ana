@@ -19,11 +19,12 @@ const openAIBaseURL = "https://api.openai.com/v1"
 
 // OpenAIProvider implements the Provider interface for OpenAI
 type OpenAIProvider struct {
-	apiKey      string
-	model       string
-	temperature float64
-	client      *http.Client
-	log         zerolog.Logger
+	apiKey       string
+	model        string
+	temperature  float64
+	client       *http.Client
+	log          zerolog.Logger
+	streamerName string
 }
 
 // OpenAIChatRequest represents a chat completion request
@@ -76,7 +77,7 @@ type OpenAIError struct {
 }
 
 // NewOpenAIProvider creates a new OpenAI provider
-func NewOpenAIProvider(cfg config.OpenAILLMConfig) (*OpenAIProvider, error) {
+func NewOpenAIProvider(cfg config.OpenAILLMConfig, streamerName string) (*OpenAIProvider, error) {
 	if cfg.APIKey == "" {
 		return nil, fmt.Errorf("OpenAI API key is required")
 	}
@@ -92,13 +93,14 @@ func NewOpenAIProvider(cfg config.OpenAILLMConfig) (*OpenAIProvider, error) {
 	}
 
 	return &OpenAIProvider{
-		apiKey:      cfg.APIKey,
-		model:       model,
-		temperature: temperature,
+		apiKey:       cfg.APIKey,
+		model:        model,
+		temperature:  temperature,
 		client: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		log: logger.Component("openai-llm"),
+		log:          logger.Component("openai-llm"),
+		streamerName: streamerName,
 	}, nil
 }
 
@@ -117,7 +119,7 @@ func (p *OpenAIProvider) Complete(ctx context.Context, prompt string) (Action, e
 		Messages: []OpenAIMessage{
 			{
 				Role:    "system",
-				Content: GetSystemPrompt(),
+				Content: GetSystemPromptWithStreamer(p.streamerName),
 			},
 			{
 				Role:    "user",
@@ -175,6 +177,11 @@ func (p *OpenAIProvider) Complete(ctx context.Context, prompt string) (Action, e
 	// Check for valid response
 	if len(openAIResp.Choices) == 0 {
 		return Action{}, fmt.Errorf("no choices in OpenAI response")
+	}
+
+	// Validate choice has valid message
+	if openAIResp.Choices[0].Message.Content == "" {
+		return Action{}, fmt.Errorf("empty content in OpenAI response")
 	}
 
 	content := openAIResp.Choices[0].Message.Content
@@ -241,6 +248,11 @@ func (p *OpenAIProvider) CompleteRaw(ctx context.Context, prompt string) (string
 
 	if len(openAIResp.Choices) == 0 {
 		return "", fmt.Errorf("no choices in response")
+	}
+
+	// Validate choice has valid message
+	if openAIResp.Choices[0].Message.Content == "" {
+		return "", fmt.Errorf("empty content in OpenAI response")
 	}
 
 	return openAIResp.Choices[0].Message.Content, nil

@@ -272,10 +272,19 @@ func simpleEval(expr string) (float64, error) {
 			break
 		}
 
+		// Validate operator part is not empty
+		if len(parts[i-1]) == 0 {
+			return 0, fmt.Errorf("operador inválido")
+		}
+
 		operator := parts[i-1][len(parts[i-1])-1:] // Get last char
 		if operator != "+" && operator != "-" {
 			operator = "+"
 			i--
+		}
+
+		if i >= len(parts) {
+			return 0, fmt.Errorf("expresión incompleta")
 		}
 
 		nextVal, err := parseAndMultiplyDivide(parts[i])
@@ -313,7 +322,16 @@ func parseAndMultiplyDivide(expr string) (float64, error) {
 			break
 		}
 
+		// Validate operator part is not empty
+		if len(parts[i-1]) == 0 {
+			return 0, fmt.Errorf("operador inválido")
+		}
+
 		operator := parts[i-1][len(parts[i-1])-1:]
+		if i >= len(parts) {
+			return 0, fmt.Errorf("expresión incompleta")
+		}
+
 		nextStr := parts[i]
 
 		nextVal, err := strconv.ParseFloat(nextStr, 64)

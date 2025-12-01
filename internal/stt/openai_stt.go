@@ -64,9 +64,20 @@ func (p *OpenAISTTProvider) Name() string {
 
 // Transcribe converts audio bytes to text
 func (p *OpenAISTTProvider) Transcribe(ctx context.Context, audio []byte) (*TranscriptionResult, error) {
+	// Validate audio input
+	if audio == nil || len(audio) == 0 {
+		return nil, fmt.Errorf("audio data is empty or nil")
+	}
+
 	// Create temporary WAV file
 	tempFile := utils.GetTempFilePath("ana_audio", ".wav")
 	defer os.Remove(tempFile)
+
+	// Ensure temp directory exists
+	tempDir := os.TempDir()
+	if err := utils.EnsureDir(tempDir); err != nil {
+		return nil, fmt.Errorf("failed to ensure temp directory: %w", err)
+	}
 
 	// Check if audio is already WAV format or raw PCM
 	if len(audio) > 4 && string(audio[0:4]) == "RIFF" {
@@ -77,6 +88,11 @@ func (p *OpenAISTTProvider) Transcribe(ctx context.Context, audio []byte) (*Tran
 		if err := utils.SaveWAV(tempFile, audio, 16000, 1, 16); err != nil {
 			return nil, fmt.Errorf("failed to save audio as WAV: %w", err)
 		}
+	}
+
+	// Verify temp file was created
+	if !utils.FileExists(tempFile) {
+		return nil, fmt.Errorf("failed to create temporary audio file")
 	}
 
 	return p.TranscribeFile(ctx, tempFile)

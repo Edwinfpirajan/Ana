@@ -83,9 +83,18 @@ func CalculateRMS(samples []int16) float64 {
 
 // BytesToInt16 converts byte slice to int16 slice (little endian)
 func BytesToInt16(data []byte) []int16 {
+	if len(data) == 0 {
+		return []int16{}
+	}
+
+	// Ensure even number of bytes for proper int16 conversion
+	if len(data)%2 != 0 {
+		data = data[:len(data)-1]
+	}
+
 	samples := make([]int16, len(data)/2)
 	for i := 0; i < len(samples); i++ {
-		samples[i] = int16(binary.LittleEndian.Uint16(data[i*2:]))
+		samples[i] = int16(binary.LittleEndian.Uint16(data[i*2 : i*2+2]))
 	}
 	return samples
 }

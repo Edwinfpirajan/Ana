@@ -19,9 +19,10 @@ type Config struct {
 
 // GeneralConfig contains general application settings
 type GeneralConfig struct {
-	Language string `yaml:"language" mapstructure:"language"`
-	LogLevel string `yaml:"log_level" mapstructure:"log_level"`
-	DataDir  string `yaml:"data_dir" mapstructure:"data_dir"`
+	Language      string `yaml:"language" mapstructure:"language"`
+	LogLevel      string `yaml:"log_level" mapstructure:"log_level"`
+	DataDir       string `yaml:"data_dir" mapstructure:"data_dir"`
+	StreamerName  string `yaml:"streamer_name" mapstructure:"streamer_name"`
 }
 
 // AudioConfig contains audio capture settings

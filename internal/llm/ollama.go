@@ -18,11 +18,12 @@ import (
 
 // OllamaProvider implements the Provider interface for Ollama
 type OllamaProvider struct {
-	url     string
-	model   string
-	timeout time.Duration
-	client  *http.Client
-	log     zerolog.Logger
+	url          string
+	model        string
+	timeout      time.Duration
+	client       *http.Client
+	log          zerolog.Logger
+	streamerName string
 }
 
 // OllamaRequest represents a request to the Ollama API
@@ -58,20 +59,21 @@ type OllamaTagsResponse struct {
 }
 
 // NewOllamaProvider creates a new Ollama provider
-func NewOllamaProvider(cfg config.OllamaConfig) (*OllamaProvider, error) {
+func NewOllamaProvider(cfg config.OllamaConfig, streamerName string) (*OllamaProvider, error) {
 	timeout := cfg.Timeout()
 	if timeout == 0 {
 		timeout = 30 * time.Second
 	}
 
 	return &OllamaProvider{
-		url:     strings.TrimSuffix(cfg.URL, "/"),
-		model:   cfg.Model,
-		timeout: timeout,
+		url:          strings.TrimSuffix(cfg.URL, "/"),
+		model:        cfg.Model,
+		timeout:      timeout,
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		log: logger.Component("ollama"),
+		log:          logger.Component("ollama"),
+		streamerName: streamerName,
 	}, nil
 }
 
@@ -88,7 +90,7 @@ func (p *OllamaProvider) Complete(ctx context.Context, prompt string) (Action, e
 	reqBody := OllamaRequest{
 		Model:  p.model,
 		Prompt: prompt,
-		System: GetSystemPrompt(),
+		System: GetSystemPromptWithStreamer(p.streamerName),
 		Stream: false,
 		Format: "json", // Force JSON output
 		Options: &OllamaOptions{

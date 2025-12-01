@@ -100,11 +100,16 @@ func (p *WhisperProvider) TranscribeFile(ctx context.Context, filePath string) (
 		Msg("Starting transcription")
 
 	// Build command arguments for whisper-cli
+	outputFile := filePath
+	if len(filePath) > 4 && filePath[len(filePath)-4:] == ".wav" {
+		outputFile = filePath[:len(filePath)-4]
+	}
+
 	args := []string{
 		"-m", p.modelPath,           // model path
 		"-l", p.language,            // language
 		"-otxt",                     // output as text file
-		"-of", filePath[:len(filePath)-4], // output file (without extension)
+		"-of", outputFile,           // output file (without extension)
 		"-nt",                       // no timestamps
 		"-f", filePath,              // input file
 	}
@@ -137,7 +142,10 @@ func (p *WhisperProvider) TranscribeFile(ctx context.Context, filePath string) (
 		Msg("Whisper stdout content")
 
 	// Also check for output file specified via -of flag
-	outputPath := filePath[:len(filePath)-4] // Remove .wav extension
+	outputPath := filePath
+	if len(filePath) > 4 && filePath[len(filePath)-4:] == ".wav" {
+		outputPath = filePath[:len(filePath)-4]
+	}
 	txtFile := outputPath + ".txt"
 	p.log.Debug().Str("expected_txt_file", txtFile).Msg("Looking for output file")
 

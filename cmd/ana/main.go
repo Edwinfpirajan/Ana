@@ -25,7 +25,8 @@ func main() {
 	// Load configuration
 	cfg, err := config.Load("")
 	if err != nil {
-		logger.Fatal("Failed to load configuration", err)
+		logger.Error("Failed to load configuration", err)
+		os.Exit(1)
 	}
 
 	logger.Info("Ana Streamer starting...")
@@ -38,14 +39,16 @@ func main() {
 	var sttProvider stt.Provider
 	sttProvider, err = initializeSTT(ctx, cfg)
 	if err != nil {
-		logger.Fatal("Failed to initialize STT provider", err)
+		logger.Error("Failed to initialize STT provider", err)
+		os.Exit(1)
 	}
 
 	// Initialize LLM Provider
 	var llmProvider llm.Provider
 	llmProvider, err = initializeLLM(ctx, cfg)
 	if err != nil {
-		logger.Fatal("Failed to initialize LLM provider", err)
+		logger.Error("Failed to initialize LLM provider", err)
+		os.Exit(1)
 	}
 
 	// Initialize TTS Provider
@@ -93,13 +96,15 @@ func main() {
 
 	// Start pipeline
 	if err := ppl.Start(ctx); err != nil {
-		logger.Fatal("Failed to start pipeline", err)
+		logger.Error("Failed to start pipeline", err)
+		os.Exit(1)
 	}
 
 	// Initialize audio capture
 	audioCapture, err := audio.Start(ctx, cfg.Audio, ppl, sttProvider, nil)
 	if err != nil {
-		logger.Fatal("Failed to initialize audio capture", err)
+		logger.Error("Failed to initialize audio capture", err)
+		os.Exit(1)
 	}
 
 	// Initialize hotkey listener
@@ -169,19 +174,20 @@ func initializeSTT(ctx context.Context, cfg *config.Config) (stt.Provider, error
 }
 
 func initializeLLM(ctx context.Context, cfg *config.Config) (llm.Provider, error) {
+	streamerName := cfg.General.StreamerName
 	switch cfg.LLM.Provider {
 	case "ollama":
 		logger.Info("Initializing Ollama LLM provider")
-		return llm.NewOllamaProvider(cfg.LLM.Ollama)
+		return llm.NewOllamaProvider(cfg.LLM.Ollama, streamerName)
 	case "openai":
 		logger.Info("Initializing OpenAI LLM provider")
-		return llm.NewOpenAIProvider(cfg.LLM.OpenAI)
+		return llm.NewOpenAIProvider(cfg.LLM.OpenAI, streamerName)
 	case "auto":
 		logger.Info("Trying Ollama first, fallback to OpenAI")
-		provider, err := llm.NewOllamaProvider(cfg.LLM.Ollama)
+		provider, err := llm.NewOllamaProvider(cfg.LLM.Ollama, streamerName)
 		if err != nil || !provider.IsAvailable(ctx) {
 			logger.Warn("Ollama not available, using OpenAI")
-			return llm.NewOpenAIProvider(cfg.LLM.OpenAI)
+			return llm.NewOpenAIProvider(cfg.LLM.OpenAI, streamerName)
 		}
 		return provider, nil
 	default:

@@ -20,10 +20,36 @@
 
 ### Requisitos Previos
 
+#### Requisitos Básicos
 1. **Go 1.22+** instalado
-2. **Ollama** corriendo localmente (para LLM)
-3. **Whisper.cpp** compilado (para STT)
-4. **Piper** instalado (para TTS)
+2. **GCC** (para compilación con CGO)
+3. **PortAudio** (librerías de desarrollo)
+4. **Ollama** corriendo localmente (para LLM)
+5. **Whisper.cpp** compilado (para STT)
+6. **Piper** instalado (para TTS)
+
+#### Instalar PortAudio por Sistema Operativo
+
+**Windows (MinGW/MSYS2):**
+```bash
+# Desde MSYS2 shell
+pacman -S mingw-w64-x86_64-portaudio
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install portaudio19-dev build-essential
+```
+
+**Fedora/RHEL:**
+```bash
+sudo dnf install portaudio-devel gcc
+```
+
+**macOS:**
+```bash
+brew install portaudio
+```
 
 ### Instalación
 
@@ -41,11 +67,36 @@ cp config/ana.config.example.yaml config/ana.config.yaml
 # Editar configuración
 nano config/ana.config.yaml
 
-# Compilar
-go build -o ana ./cmd/ana
+# Compilar (usa el script de build)
+# Windows:
+./build.bat
+
+# Linux/macOS:
+./build.sh
 
 # Ejecutar
+# Windows:
+./ana.exe
+
+# Linux/macOS:
 ./ana
+```
+
+#### Build Manual (sin scripts)
+
+Si prefieres compilar manualmente, necesitas habilitar CGO y el build tag `portaudio`:
+
+**Windows (desde MinGW/MSYS2):**
+```bash
+set CGO_ENABLED=1
+set CC=gcc
+go build -tags portaudio -o ana.exe ./cmd/ana/main.go
+```
+
+**Linux/macOS:**
+```bash
+export CGO_ENABLED=1
+go build -tags portaudio -o ana ./cmd/ana/main.go
 ```
 
 ### Descargar Modelos
@@ -194,15 +245,51 @@ AnaStreamer/
 
 ## 🔧 Desarrollo
 
+### Compilación con PortAudio
+
+Ana requiere compilación con CGO y el build tag `portaudio` para capturar audio:
+
+```bash
+# Método recomendado: usar scripts de build
+# Windows:
+./build.bat
+
+# Linux/macOS:
+./build.sh
+
+# Método manual: compilación directa
+# Windows (desde MSYS2):
+set CGO_ENABLED=1 && set CC=gcc && go build -tags portaudio -o ana.exe ./cmd/ana/main.go
+
+# Linux/macOS:
+CGO_ENABLED=1 go build -tags portaudio -o ana ./cmd/ana/main.go
+```
+
+### Tests y Debugging
+
 ```bash
 # Ejecutar tests
 go test ./...
 
-# Compilar para producción
-go build -ldflags "-s -w" -o ana ./cmd/ana
+# Compilar sin audio capture (stub mode - sin PortAudio)
+# Útil para testing sin hardware:
+go build -o ana ./cmd/ana/main.go
 
-# Cross-compile para Windows
-GOOS=windows GOARCH=amd64 go build -o ana.exe ./cmd/ana
+# Compilar con símbolos de debug
+go build -tags portaudio -gcflags="all=-N -l" -o ana ./cmd/ana/main.go
+```
+
+### Limpiar build artifacts
+
+```bash
+# Limpiar binarios
+rm ana ana.exe
+
+# Limpiar module cache
+go clean -modcache
+
+# Limpiar build cache
+go clean -cache
 ```
 
 ## 📝 Licencia

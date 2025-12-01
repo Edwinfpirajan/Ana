@@ -18,13 +18,14 @@ func NewAutoProvider(cfg *config.Config) (Provider, error) {
 	var providers []Provider
 	var errs []string
 
-	if p, err := NewOllamaProvider(cfg.LLM.Ollama); err == nil {
+	streamerName := cfg.General.StreamerName
+	if p, err := NewOllamaProvider(cfg.LLM.Ollama, streamerName); err == nil {
 		providers = append(providers, p)
 	} else {
 		errs = append(errs, fmt.Sprintf("ollama: %v", err))
 	}
 
-	if p, err := NewOpenAIProvider(cfg.LLM.OpenAI); err == nil {
+	if p, err := NewOpenAIProvider(cfg.LLM.OpenAI, streamerName); err == nil {
 		providers = append(providers, p)
 	} else {
 		errs = append(errs, fmt.Sprintf("openai: %v", err))

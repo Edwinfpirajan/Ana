@@ -110,6 +110,12 @@ func (p *PiperProvider) Synthesize(ctx context.Context, text string) ([]byte, er
 	tempFile := utils.GetTempFilePath("ana_tts", ".wav")
 	defer os.Remove(tempFile)
 
+	// Ensure temp directory exists and is writable
+	tempDir := filepath.Dir(tempFile)
+	if err := utils.EnsureDir(tempDir); err != nil {
+		return nil, fmt.Errorf("failed to ensure temp directory exists: %w", err)
+	}
+
 	// Build command arguments
 	args := []string{
 		"--model", p.modelPath,
@@ -186,8 +192,19 @@ func (p *PiperProvider) playAudio(ctx context.Context, audio []byte) error {
 	tempFile := utils.GetTempFilePath("ana_play", ".wav")
 	defer os.Remove(tempFile)
 
+	// Ensure temp directory exists
+	tempDir := filepath.Dir(tempFile)
+	if err := utils.EnsureDir(tempDir); err != nil {
+		return fmt.Errorf("failed to ensure temp directory exists: %w", err)
+	}
+
 	if err := os.WriteFile(tempFile, audio, 0644); err != nil {
 		return fmt.Errorf("failed to write temp audio: %w", err)
+	}
+
+	// Verify file was created successfully
+	if !utils.FileExists(tempFile) {
+		return fmt.Errorf("failed to create temp audio file: %s", tempFile)
 	}
 
 	// Use platform-specific player

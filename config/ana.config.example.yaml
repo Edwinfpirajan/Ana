@@ -7,6 +7,7 @@ general:
   language: "es"                    # Idioma principal (es, en)
   log_level: "info"                 # debug, info, warn, error
   data_dir: "./data"                # Directorio para datos persistentes
+  streamer_name: "Ferchando"        # Tu nombre como streamer (Ana te saludará por tu nombre)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURACIÓN DE AUDIO
@@ -82,11 +83,10 @@ tts:
   
   piper:
     binary_path: "./bin/piper/piper.exe"      # Ruta al ejecutable de Piper
-    model_path: "./assets/voices/piper/es_ES-davefx-medium.onnx"
+    model_path: "./assets/voices/piper/claude/es_MX-claude-high.onnx"
     speed: 1.0                      # 0.5 = lento, 1.0 = normal, 1.5 = rápido
     # Voces español recomendadas:
-    # - es_ES-davefx-medium (España, masculina)
-    # - es_MX-ald-medium (México, masculina)
+    # - claude/es_MX-claude-high.onnx (México - alta calidad)
   
   openai:
     api_key: "${OPENAI_API_KEY}"

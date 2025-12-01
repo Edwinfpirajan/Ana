@@ -4,9 +4,10 @@ package config
 func DefaultConfig() *Config {
 	return &Config{
 		General: GeneralConfig{
-			Language: "es",
-			LogLevel: "info",
-			DataDir:  "./data",
+			Language:     "es",
+			LogLevel:     "info",
+			DataDir:      "./data",
+			StreamerName: "Streamer",
 		},
 		Audio: AudioConfig{
 			Device:     "default",
@@ -45,7 +46,7 @@ func DefaultConfig() *Config {
 			Provider: "ollama",
 			Ollama: OllamaConfig{
 				URL:            "http://localhost:11434",
-				Model:          "mistral:latest",
+				Model:          "gemma3:4b",
 				TimeoutSeconds: 30,
 			},
 			OpenAI: OpenAILLMConfig{
@@ -108,6 +109,9 @@ func ApplyDefaults(cfg *Config) {
 	}
 	if cfg.General.DataDir == "" {
 		cfg.General.DataDir = defaults.General.DataDir
+	}
+	if cfg.General.StreamerName == "" {
+		cfg.General.StreamerName = defaults.General.StreamerName
 	}
 
 	// Audio

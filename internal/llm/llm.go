@@ -90,11 +90,12 @@ type Provider interface {
 
 // New creates a new LLM provider based on configuration
 func New(cfg *config.Config) (Provider, error) {
+	streamerName := cfg.General.StreamerName
 	switch cfg.LLM.Provider {
 	case "ollama":
-		return NewOllamaProvider(cfg.LLM.Ollama)
+		return NewOllamaProvider(cfg.LLM.Ollama, streamerName)
 	case "openai":
-		return NewOpenAIProvider(cfg.LLM.OpenAI)
+		return NewOpenAIProvider(cfg.LLM.OpenAI, streamerName)
 	case "auto":
 		return NewAutoProvider(cfg)
 	default:

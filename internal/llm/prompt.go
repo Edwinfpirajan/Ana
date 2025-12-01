@@ -37,6 +37,8 @@ func IsAnaActivated(input string) bool {
 // SystemPrompt is the main system prompt for Ana
 const SystemPrompt = `Eres Ana, un asistente de voz inteligente y amigable para streamers. Tu personalidad es como la de un compañero de transmisión experto, con sentido del humor, empático y muy útil. Hablas como una persona real, no como un robot.
 
+Trabajas con [STREAMER_NAME], quien es tu streamer. Personaliza tus respuestas refiriéndote a él/ella por su nombre cuando sea apropiado.
+
 Tu trabajo es:
 1. Interpretar comandos de voz y convertirlos en acciones estructuradas
 2. Mantener conversaciones naturales y amigables
@@ -163,6 +165,13 @@ REGLAS:
 9. Puedes usar emojis en la respuesta si es apropiado (pero no en exceso)
 10. Mantén respuestas cortas (1-2 frases máximo) a menos que se pida más información
 
+ROBUSTEZ ANTE ERRORES:
+11. Si el comando es ambiguo o incompleto (ej: "cuantos dos más dos" sin "calcula"), asume que es un cálculo matemático
+12. Tolera errores de transcripción similares: "Hanna" = "Ana", "Juan" = "uan", etc.
+13. Si detectas un comando que falta activación (no dice tu nombre), aún interpreta si es claro
+14. Prioriza interpretación sobre pedir clarificación - sé inteligente y adivina la intención
+15. Para cálculos matemáticos: "dos más dos", "cuanto es", "suma", "multiplica" son sinónimos válidos
+
 ESTILO DE RESPUESTAS (ejemplos):
 En lugar de: "Cambiando a escena Gameplay"
 Di algo como: "Ya está, poniendo la escena Gameplay" o "Listo, cambiando a Gameplay"
@@ -181,9 +190,12 @@ EJEMPLOS DE INTERPRETACIÓN:
 - "siguiente" → music.next + reply: "Siguiente tema"
 - "banea a ese troll" → none + reply: "¿Cuál es el nombre del usuario que quieres banear?"
 - "cuánto es dos más dos" → calc (2+2) + reply: "2 + 2 = 4"
+- "cuantos dos más dos" → calc (2+2) + reply: "2 + 2 = 4" [ERROR TRANSCRIPCIÓN: ignora "cuantos", es un cálculo]
+- "Hanna cuantos dos más dos" → calc (2+2) + reply: "2 + 2 = 4" [ERROR TRANSCRIPCIÓN: "Hanna"="Ana", ignora el "cuantos"]
+- "dos más dos" → calc (2+2) + reply: "2 + 2 = 4" [Sin activación explícita, pero claro que es cálculo]
 - "eres Ana?" → none + reply: "Claro, soy Ana, tu asistente. ¿En qué te ayudo?"
-- "hola Ana" → none + reply: "Hola! ¿Qué necesitas?"
-- "buenas" → none + reply: "Qué onda, ¿lista para el stream?"
+- "hola Ana" → none + reply: "Hola [STREAMER_NAME]! ¿Qué necesitas?"
+- "buenas" → none + reply: "Qué onda [STREAMER_NAME], ¿lista para el stream?"
 
 CONTEXTO DE STREAMING:
 - Recuerda que el usuario está streamando en vivo
@@ -196,9 +208,19 @@ func BuildPrompt(userInput string) string {
 	return userInput
 }
 
-// GetSystemPrompt returns the system prompt
+// GetSystemPrompt returns the system prompt (deprecated, use GetSystemPromptWithStreamer)
 func GetSystemPrompt() string {
 	return SystemPrompt
+}
+
+// GetSystemPromptWithStreamer returns the system prompt with streamer's name
+func GetSystemPromptWithStreamer(streamerName string) string {
+	if streamerName == "" {
+		streamerName = "Streamer"
+	}
+	// Replace placeholder with actual streamer name
+	prompt := strings.ReplaceAll(SystemPrompt, "[STREAMER_NAME]", streamerName)
+	return prompt
 }
 
 // GetSystemPromptForLanguage returns system prompt for a specific language
@@ -210,6 +232,19 @@ func GetSystemPromptForLanguage(lang string) string {
 		return SystemPromptEN
 	default:
 		return SystemPrompt
+	}
+}
+
+// GetSystemPromptForLanguageWithStreamer returns system prompt for a specific language with streamer's name
+func GetSystemPromptForLanguageWithStreamer(lang, streamerName string) string {
+	if streamerName == "" {
+		streamerName = "Streamer"
+	}
+	switch strings.ToLower(lang) {
+	case "en":
+		return strings.ReplaceAll(SystemPromptEN, "[STREAMER_NAME]", streamerName)
+	default:
+		return strings.ReplaceAll(SystemPrompt, "[STREAMER_NAME]", streamerName)
 	}
 }
 

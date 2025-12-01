@@ -92,7 +92,12 @@ func RunProcessWithStdin(ctx context.Context, input []byte, name string, args ..
 	// Write input to stdin
 	go func() {
 		defer stdin.Close()
-		stdin.Write(input)
+		// Write input and handle errors
+		_, err := stdin.Write(input)
+		if err != nil {
+			// Log error but don't fail - the process may still produce output
+			fmt.Printf("warning: failed to write to stdin: %v\n", err)
+		}
 	}()
 
 	stdoutBytes, _ := io.ReadAll(stdout)

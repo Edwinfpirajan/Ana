@@ -297,7 +297,7 @@ func (p *Pipeline) handleAudio(ctx context.Context, audio []byte) {
 	}
 
 	// Always analyze for VAD when listening or recording
-	if state == StateListening || state == StateRecording || p.GetState() == StateListening || p.GetState() == StateRecording {
+	if state == StateListening || state == StateRecording {
 		p.bufferMu.Lock()
 		p.audioBuffer.Write(audio)
 		p.bufferMu.Unlock()
