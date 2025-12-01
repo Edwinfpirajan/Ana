@@ -376,12 +376,19 @@ func (p *Pipeline) recordUntilSilence(ctx context.Context) {
 	silenceThreshold := time.Duration(p.cfg.Audio.VAD.SilenceThresholdMs) * time.Millisecond
 	maxRecordTime := 30 * time.Second // Maximum recording time
 
+	// Timeout for waiting for first speech to be detected
+	// If no speech within 15 seconds, assume user is not speaking
+	firstSpeechTimeout := 15 * time.Second
+
 	timeout := time.NewTimer(maxRecordTime)
 	defer timeout.Stop()
 
 	checkInterval := 100 * time.Millisecond
 	ticker := time.NewTicker(checkInterval)
 	defer ticker.Stop()
+
+	startTime := time.Now()
+	var firstSpeechTime time.Time
 
 	for {
 		select {
@@ -393,7 +400,12 @@ func (p *Pipeline) recordUntilSilence(ctx context.Context) {
 			p.log.Warn().Msg("Recording timeout reached")
 			return
 		case <-ticker.C:
-			// Check if we have enough silence after speech
+			// Once speech is detected, capture its timestamp
+			if p.hasSpeech && firstSpeechTime.IsZero() {
+				firstSpeechTime = p.speechStart
+			}
+
+			// If we've detected speech and now have silence
 			if p.hasSpeech && !p.silenceStart.IsZero() {
 				silenceDuration := time.Since(p.silenceStart)
 				if silenceDuration >= silenceThreshold {
@@ -402,6 +414,13 @@ func (p *Pipeline) recordUntilSilence(ctx context.Context) {
 						Msg("Silence threshold reached")
 					return
 				}
+			}
+
+			// If we haven't detected speech after firstSpeechTimeout, give up
+			// This prevents indefinite waiting in persistent session
+			if !p.hasSpeech && time.Since(startTime) > firstSpeechTimeout {
+				p.log.Debug().Msg("No speech detected within timeout, continuing session")
+				return
 			}
 		}
 	}
