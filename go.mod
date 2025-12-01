@@ -3,7 +3,7 @@ module github.com/anastreamer/ana
 go 1.22
 
 require (
-	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
+	github.com/gordonklaus/portaudio v0.0.0-20221027163845-7c3b689db3cc
 	github.com/gorilla/websocket v1.5.1
 	github.com/rs/zerolog v1.32.0
 	github.com/spf13/viper v1.18.2
