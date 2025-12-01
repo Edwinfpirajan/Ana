@@ -241,14 +241,40 @@ func (p *Pipeline) run(ctx context.Context) {
 // handleWakeWord handles wake word detection
 func (p *Pipeline) handleWakeWord(ctx context.Context) {
 	p.setState(StateListening)
-	p.startRecording()
+	p.log.Info().Msg("Ana activated - entering persistent session mode")
+	if p.onResponse != nil {
+		p.onResponse("Aquí estoy! Dime en qué puedo ayudarte.")
+	}
 
-	// Start recording in background goroutine (non-blocking)
-	// This allows the main pipeline loop to continue processing audio
-	go func() {
-		p.recordUntilSilence(ctx)
-		p.processRecordedAudio(ctx)
-	}()
+	// Start persistent listening session
+	// The session continues until user says deactivation word
+	go p.persistentListeningSession(ctx)
+}
+
+// persistentListeningSession handles continuous listening after wake word detection
+func (p *Pipeline) persistentListeningSession(ctx context.Context) {
+	// Keep listening until deactivation or context cancellation
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-p.stopChan:
+			return
+		default:
+			// Check if still in listening state
+			if p.GetState() != StateListening {
+				return
+			}
+
+			// Record until silence
+			p.startRecording()
+			p.recordUntilSilence(ctx)
+			p.processRecordedAudio(ctx)
+
+			// processRecordedAudio will set state to StateIdle if deactivation detected
+			// Otherwise it will keep us in StateListening for next command
+		}
+	}
 }
 
 // handleHotkeyRelease handles when the hotkey is released
@@ -379,7 +405,13 @@ func (p *Pipeline) recordUntilSilence(ctx context.Context) {
 // processRecordedAudio processes the recorded audio buffer
 func (p *Pipeline) processRecordedAudio(ctx context.Context) {
 	p.setState(StateProcessing)
-	defer p.setState(StateIdle)
+	// Don't immediately return to Idle - check for deactivation first
+	defer func() {
+		// Only return to Idle if not in a persistent session or if deactivated
+		if p.GetState() == StateProcessing {
+			p.setState(StateIdle)
+		}
+	}()
 
 	p.bufferMu.Lock()
 	audio := p.audioBuffer.Bytes()
@@ -424,8 +456,20 @@ func (p *Pipeline) processRecordedAudio(ctx context.Context) {
 
 	p.log.Info().Str("text", text).Msg("Transcribed")
 
-	// Check if Ana name is mentioned
-	if !llm.IsAnaActivated(text) {
+	// Check for deactivation word first - if detected, exit the session
+	if llm.IsAnaDeactivated(text) {
+		p.log.Info().Str("text", text).Msg("Deactivation word detected - ending session")
+		if p.onResponse != nil {
+			p.onResponse("Adiós! Estoy aquí si me necesitas.")
+		}
+		p.setState(StateIdle)
+		return
+	}
+
+	// In persistent session (StateListening), we don't require "Ana" prefix for each command
+	// Only check for Ana activation if we're starting a new session from Idle state
+	currentState := p.GetState()
+	if currentState == StateIdle && !llm.IsAnaActivated(text) {
 		p.log.Debug().Str("text", text).Msg("Ignoring transcription - Ana name not mentioned")
 		return
 	}
@@ -441,6 +485,8 @@ func (p *Pipeline) processRecordedAudio(ctx context.Context) {
 		if p.onError != nil {
 			p.onError(fmt.Errorf("command processing failed: %w", err))
 		}
+		// Keep session active after error
+		p.setState(StateListening)
 		return
 	}
 
@@ -456,4 +502,8 @@ func (p *Pipeline) processRecordedAudio(ctx context.Context) {
 	if err := p.brain.ProcessAndSpeak(ctx, text); err != nil {
 		p.log.Error().Err(err).Msg("TTS failed")
 	}
+
+	// After processing a command, return to Listening state instead of Idle
+	// This keeps the session active for continuous interaction
+	p.setState(StateListening)
 }

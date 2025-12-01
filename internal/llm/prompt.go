@@ -34,6 +34,43 @@ func IsAnaActivated(input string) bool {
 	return false
 }
 
+// IsAnaDeactivated checks if the input is a deactivation command
+// Looks for variations like "adiós ana", "detente", "silencio", "para", etc.
+func IsAnaDeactivated(input string) bool {
+	if input == "" {
+		return false
+	}
+
+	input = strings.ToLower(strings.TrimSpace(input))
+
+	// Pattern matches for deactivation commands
+	patterns := []string{
+		`\badiós\b.*\bana\b`,        // "adiós ana"
+		`\badiós\s+ana\b`,           // "adiós ana"
+		`\badiós\b`,                 // just "adiós"
+		`\bdetente\b`,               // "detente"
+		`\bsilencio\b`,              // "silencio"
+		`\bpara\b.*\bana\b`,         // "para ana"
+		`\bcallate\b`,               // "cállate" (without accent)
+		`\bcallate ana\b`,           // "cállate ana"
+		`\bquieta\b`,                // "quieta"
+		`\bdeja de grabar\b`,        // "deja de grabar"
+		`\bstop\b`,                  // "stop"
+		`\bno mas\b`,                // "no más"
+		`\beso es todo\b`,           // "eso es todo"
+		`\bfin de la sesion\b`,      // "fin de la sesión"
+		`\btermina\b`,               // "termina"
+	}
+
+	for _, pattern := range patterns {
+		if matched, _ := regexp.MatchString(pattern, input); matched {
+			return true
+		}
+	}
+
+	return false
+}
+
 // SystemPrompt is the main system prompt for Ana
 const SystemPrompt = `Eres Ana, un asistente de voz inteligente y amigable para streamers. Tu personalidad es como la de un compañero de transmisión experto, con sentido del humor, empático y muy útil. Hablas como una persona real, no como un robot.
 

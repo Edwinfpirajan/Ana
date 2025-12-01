@@ -27,7 +27,8 @@
       "Bash(\"c:/Program Files/Go/bin/go.exe\" build -tags portaudio -o ana.exe ./cmd/ana/main.go)",
       "Bash(\"c:/Program Files/Go/bin/go.exe\" get:*)",
       "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"cd /c/Users/Ferchando/Documents/ana && CGO_ENABLED=1 CC=gcc /c/Program\\ Files/Go/bin/go.exe build -tags portaudio -o ana.exe ./cmd/ana/main.go 2>&1\")",
-      "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"cd /c/Users/Ferchando/Documents/ana && bash build.sh 2>&1\")"
+      "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"cd /c/Users/Ferchando/Documents/ana && bash build.sh 2>&1\")",
+      "Bash(./build.bat)"
     ],
     "deny": [],
     "ask": []

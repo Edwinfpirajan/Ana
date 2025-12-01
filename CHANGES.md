@@ -1,5 +1,42 @@
 # 📝 Resumen de Cambios - Ana Streamer
 
+## 🆕 Funcionalidad Nueva: Sesión Persistente
+
+### Descripción
+Ana Streamer ahora implementa un modo de sesión persistente que permite a los usuarios:
+- Activar Ana con la palabra "Ana"
+- Dar múltiples comandos sin repetir "Ana"
+- Desactivar la sesión con palabras como "Adiós", "Silencio", "Detente", etc.
+
+### Archivos Modificados
+- **internal/llm/prompt.go** - Agregada función `IsAnaDeactivated()` para detectar palabras de desactivación
+- **internal/pipeline/pipeline.go** - Modificadas funciones `handleWakeWord()` y `processRecordedAudio()` para soportar sesión persistente
+  - Nueva función: `persistentListeningSession()` - Mantiene el loop de escucha activo
+  - Cambios en state transitions para mantener `StateListening` entre comandos
+  - Deactivación vuelve a `StateIdle` cuando se detecta palabra de desactivación
+- **cmd/ana/main.go** - Actualizado texto de ayuda para explicar sesión persistente
+
+### Palabras de Desactivación Soportadas
+- "Adiós" / "Adiós Ana"
+- "Detente"
+- "Silencio"
+- "Para Ana"
+- "Cállate"
+- "Quieta"
+- "Deja de grabar"
+- "Stop"
+- "No más"
+- "Eso es todo"
+- "Fin de la sesión"
+- "Termina"
+
+### Documentación Actualizada
+- **README.md** - Sección "Modo Voz" con detalles de sesión persistente
+- **QUICKSTART.md** - Actualizadas instrucciones de uso
+- **cmd/ana/main.go** - Mensajes de ayuda mejorados
+
+---
+
 ## 🔧 Bugs Corregidos (9 Total)
 
 ### Bugs Críticos (5)
@@ -90,10 +127,12 @@ Todos los cambios han sido probados:
 | Métrica | Valor |
 |---------|-------|
 | Bugs corregidos | 9 |
+| Características nuevas | 1 (Sesión persistente) |
 | Archivos creados | 3 |
-| Archivos modificados | 11 |
+| Archivos modificados | 14 |
 | Líneas de código (bugs) | ~80 |
-| Documentación nueva | ~2500 líneas |
+| Líneas de código (sesión persistente) | ~100 |
+| Documentación nueva | ~3000 líneas |
 | Ejecutable final | ~16MB (con PortAudio) |
 
 ---
@@ -104,8 +143,9 @@ Todos los cambios han sido probados:
 2. Configurar Ollama
 3. Integrar con Twitch/OBS
 4. Personalizar prompts en brain.go
+5. Configurar palabras de desactivación personalizadas
 
 ---
 
 **Última actualización:** Diciembre 1, 2025
-**Estado:** ✅ Todos los bugs corregidos y programa funcional
+**Estado:** ✅ Todos los bugs corregidos + Sesión persistente implementada y testeada

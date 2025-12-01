@@ -79,9 +79,9 @@ Deberías ver:
 ════════════════════════════════════════════════════════
 
 🔊 How to use:
-   1. Say 'Ana' to activate
+   1. Say 'Ana' to activate persistent session
    2. Keep talking - no need to repeat 'Ana'
-   3. Silent for 10 seconds → auto-exits conversation
+   3. Say 'Adiós Ana' or similar to deactivate
 
 ⌨️  Hotkey: F4 (press and hold)
 

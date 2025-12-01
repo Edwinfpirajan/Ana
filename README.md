@@ -118,20 +118,33 @@ ollama pull llama3.2:3b
 
 ## 📖 Uso
 
-### Modo Interactivo (Texto)
+### Modo Voz (Por defecto)
 
 ```bash
 ./ana
 ```
 
-Escribe comandos directamente:
-```
-Ana> crea un clip
-Ana> cambia a la escena gameplay
-Ana> pon música
-Ana> status
-Ana> quit
-```
+**Características de sesión persistente:**
+
+1. **Activación**: Di "Ana" para activar
+2. **Sesión Activa**: Una vez activada, Ana permanece escuchando
+3. **Múltiples Comandos**: Puedes dar varios comandos sin repetir "Ana"
+   - "Ana, crea un clip"
+   - "Cambia a la escena gameplay" (sin necesidad de repetir "Ana")
+   - "Siguiente canción" (continúa la sesión)
+4. **Desactivación**: Di una de estas palabras para salir:
+   - "Adiós" o "Adiós Ana"
+   - "Detente"
+   - "Silencio"
+   - "Para Ana"
+   - "Cállate"
+   - "Quieta"
+   - "Deja de grabar"
+   - "Stop"
+
+### Modo Hotkey
+
+Presiona y mantén **F4** para grabar comandos sin necesidad de decir "Ana"
 
 ### Modo Test
 
