@@ -33,7 +33,7 @@ func DefaultConfig() *Config {
 		STT: STTConfig{
 			Provider: "whisper",
 			Whisper: WhisperConfig{
-				BinaryPath: "./bin/whisper",
+				BinaryPath: "./bin/whisper/whisper-cli",
 				ModelPath:  "./assets/models/whisper/ggml-base.bin",
 				Language:   "es",
 			},
@@ -45,7 +45,7 @@ func DefaultConfig() *Config {
 			Provider: "ollama",
 			Ollama: OllamaConfig{
 				URL:            "http://localhost:11434",
-				Model:          "llama3.2:3b",
+				Model:          "mistral:latest",
 				TimeoutSeconds: 30,
 			},
 			OpenAI: OpenAILLMConfig{
@@ -56,8 +56,8 @@ func DefaultConfig() *Config {
 		TTS: TTSConfig{
 			Provider: "piper",
 			Piper: PiperConfig{
-				BinaryPath: "./bin/piper",
-				ModelPath:  "./assets/voices/piper/es_ES-davefx-medium.onnx",
+				BinaryPath: "./bin/piper/piper",
+				ModelPath:  "./assets/voices/piper/carlfm/es_ES-carlfm-x-low.onnx",
 				Speed:      1.0,
 			},
 			OpenAI: OpenAITTSConfig{
