@@ -28,7 +28,18 @@
       "Bash(\"c:/Program Files/Go/bin/go.exe\" get:*)",
       "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"cd /c/Users/Ferchando/Documents/ana && CGO_ENABLED=1 CC=gcc /c/Program\\ Files/Go/bin/go.exe build -tags portaudio -o ana.exe ./cmd/ana/main.go 2>&1\")",
       "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"cd /c/Users/Ferchando/Documents/ana && bash build.sh 2>&1\")",
-      "Bash(./build.bat)"
+      "Bash(./build.bat)",
+      "Bash(./ana:*)",
+      "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"cd /c/Users/Ferchando/Documents/ana && go clean -modcache && go mod download 2>&1 | tail -20\")",
+      "Bash(/c/msys64/msys2_shell.cmd -defterm -no-start -use-full-path -c \"cd /c/Users/Ferchando/Documents/ana && go list -m -versions github.com/gordonklaus/portaudio 2>&1\")",
+      "Bash(/c/msys64/msys2_shell.cmd:*)",
+      "Bash(./ana.exe:*)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill /PID 27136 /F)",
+      "Bash(cmd /c \"taskkill /IM ana.exe /F\")",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c \"taskkill /PID 35808 /F & taskkill /PID 39924 /F & taskkill /PID 24560 /F\")",
+      "Bash(cmd /c:*)"
     ],
     "deny": [],
     "ask": []
