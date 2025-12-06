@@ -240,42 +240,51 @@ func (p *Pipeline) run(ctx context.Context) {
 
 // handleWakeWord handles wake word detection
 func (p *Pipeline) handleWakeWord(ctx context.Context) {
-	p.setState(StateListening)
-	p.log.Info().Msg("Ana activated - entering persistent session mode")
-	if p.onResponse != nil {
-		p.onResponse("Aquí estoy! Dime en qué puedo ayudarte.")
-	}
-
-	// Start persistent listening session
-	// The session continues until user says deactivation word
-	go p.persistentListeningSession(ctx)
+	p.log.Info().Msg("Ana wake word detected - starting one-time recording")
+	// Simple: just record once, process, and go back to idle
+	p.startRecording()
+	go func() {
+		p.recordUntilSilence(ctx)
+		p.processRecordedAudio(ctx)
+	}()
 }
 
 // persistentListeningSession handles continuous listening after wake word detection
 func (p *Pipeline) persistentListeningSession(ctx context.Context) {
+	p.log.Info().Msg("🔴 PERSISTENT SESSION STARTED")
 	// Keep listening until deactivation or context cancellation
 	for {
 		select {
 		case <-ctx.Done():
+			p.log.Info().Msg("Persistent session: context done")
 			return
 		case <-p.stopChan:
+			p.log.Info().Msg("Persistent session: stop signal")
 			return
 		default:
 		}
 
 		// Check if still in listening state
-		if p.GetState() != StateListening {
+		currentState := p.GetState()
+		p.log.Info().Str("state", currentState.String()).Msg("Persistent session: checking state")
+		if currentState != StateListening {
+			p.log.Info().Str("state", currentState.String()).Msg("Persistent session: exiting - not in listening state")
 			return
 		}
 
 		// Record until silence - this is blocking and waits for audio
 		// Once audio ends with silence, it returns
+		p.log.Info().Msg("Persistent session: starting recording loop")
 		p.startRecording()
+		p.log.Info().Msg("Persistent session: calling recordUntilSilence")
 		p.recordUntilSilence(ctx)
+		p.log.Info().Msg("Persistent session: recordUntilSilence returned")
 
 		// Process the recorded audio
 		// This will handle deactivation check and state management
+		p.log.Info().Msg("Persistent session: calling processRecordedAudio")
 		p.processRecordedAudio(ctx)
+		p.log.Info().Msg("Persistent session: processRecordedAudio returned")
 
 		// Loop back to record next command
 		// If deactivation was detected, GetState() will be Idle and loop will exit
@@ -307,18 +316,19 @@ func (p *Pipeline) startRecording() {
 func (p *Pipeline) handleAudio(ctx context.Context, audio []byte) {
 	state := p.GetState()
 
-	// Auto-start recording when speech is detected in Idle state
+	// In Idle state, detect speech and transcribe to look for wake word "Ana"
+	// This allows activation by saying "Ana" without pressing F4
 	if state == StateIdle && p.cfg.Audio.VAD.Enabled {
 		samples := utils.BytesToInt16(audio)
 		rms := utils.CalculateRMS(samples)
 		threshold := float64(500) * (1.0 - p.cfg.Audio.VAD.Sensitivity)
 
 		if rms > threshold {
-			p.log.Debug().Float64("rms", rms).Float64("threshold", threshold).Msg("Voice detected in Idle state, starting recording")
-			p.setState(StateListening)
+			p.log.Debug().Float64("rms", rms).Float64("threshold", threshold).Msg("Voice detected in Idle state, checking for wake word")
+			// Start recording to check for wake word
 			p.startRecording()
 
-			// Start silence detection in background
+			// Start wake word detection in background
 			go func() {
 				p.recordUntilSilence(ctx)
 				p.processRecordedAudio(ctx)
@@ -327,8 +337,9 @@ func (p *Pipeline) handleAudio(ctx context.Context, audio []byte) {
 		}
 	}
 
-	// Always analyze for VAD when listening or recording
-	if state == StateListening || state == StateRecording {
+	// Process audio when in Listening or Recording state
+	currentState := p.GetState()
+	if currentState == StateListening || currentState == StateRecording {
 		p.bufferMu.Lock()
 		p.audioBuffer.Write(audio)
 		p.bufferMu.Unlock()
@@ -371,56 +382,64 @@ func (p *Pipeline) analyzeVAD(audio []byte) {
 	}
 }
 
-// recordUntilSilence records until silence is detected
+// recordUntilSilence records until silence is detected OR max speaking time reached
 func (p *Pipeline) recordUntilSilence(ctx context.Context) {
 	silenceThreshold := time.Duration(p.cfg.Audio.VAD.SilenceThresholdMs) * time.Millisecond
 	maxRecordTime := 30 * time.Second // Maximum recording time
-
-	// Timeout for waiting for first speech to be detected
-	// If no speech within 15 seconds, assume user is not speaking
-	firstSpeechTimeout := 15 * time.Second
+	autoProcessTime := 6 * time.Second // Auto-process after 6 seconds if still speaking
 
 	timeout := time.NewTimer(maxRecordTime)
 	defer timeout.Stop()
+
+	autoProcess := time.NewTimer(autoProcessTime)
+	defer autoProcess.Stop()
 
 	checkInterval := 100 * time.Millisecond
 	ticker := time.NewTicker(checkInterval)
 	defer ticker.Stop()
 
+	p.log.Info().Msg("recordUntilSilence: waiting for speech and silence")
 	startTime := time.Now()
-	var firstSpeechTime time.Time
 
 	for {
 		select {
 		case <-ctx.Done():
+			p.log.Info().Msg("recordUntilSilence: context done")
 			return
 		case <-p.stopChan:
+			p.log.Info().Msg("recordUntilSilence: stop signal")
 			return
 		case <-timeout.C:
 			p.log.Warn().Msg("Recording timeout reached")
 			return
-		case <-ticker.C:
-			// Once speech is detected, capture its timestamp
-			if p.hasSpeech && firstSpeechTime.IsZero() {
-				firstSpeechTime = p.speechStart
+		case <-autoProcess.C:
+			// Auto-process after 6 seconds if we have speech
+			if p.hasSpeech {
+				p.log.Info().Msg("Auto-processing after 6 seconds of speech")
+				return
 			}
-
+		case <-ticker.C:
 			// If we've detected speech and now have silence
 			if p.hasSpeech && !p.silenceStart.IsZero() {
 				silenceDuration := time.Since(p.silenceStart)
+
 				if silenceDuration >= silenceThreshold {
-					p.log.Debug().
+					p.log.Info().
 						Dur("silence", silenceDuration).
 						Msg("Silence threshold reached")
 					return
 				}
 			}
 
-			// If we haven't detected speech after firstSpeechTimeout, give up
-			// This prevents indefinite waiting in persistent session
-			if !p.hasSpeech && time.Since(startTime) > firstSpeechTimeout {
-				p.log.Debug().Msg("No speech detected within timeout, continuing session")
-				return
+			// If we have speech for more than 2 seconds, start considering shorter silences
+			if p.hasSpeech && time.Since(startTime) > 2*time.Second {
+				if !p.silenceStart.IsZero() {
+					// After 2 seconds of speech, accept shorter silences (300ms)
+					if time.Since(p.silenceStart) >= 300*time.Millisecond {
+						p.log.Info().Msg("Short silence after speech detected, processing")
+						return
+					}
+				}
 			}
 		}
 	}
@@ -428,6 +447,10 @@ func (p *Pipeline) recordUntilSilence(ctx context.Context) {
 
 // processRecordedAudio processes the recorded audio buffer
 func (p *Pipeline) processRecordedAudio(ctx context.Context) {
+	// Capture state BEFORE changing to StateProcessing
+	stateBeforeProcessing := p.GetState()
+	p.log.Info().Str("stateBeforeProcessing", stateBeforeProcessing.String()).Msg("DEBUG: State captured before processing")
+
 	p.setState(StateProcessing)
 	// Don't immediately return to Idle - check for deactivation first
 	defer func() {
@@ -490,13 +513,14 @@ func (p *Pipeline) processRecordedAudio(ctx context.Context) {
 		return
 	}
 
-	// In persistent session (StateListening), we don't require "Ana" prefix for each command
-	// Only check for Ana activation if we're starting a new session from Idle state
-	currentState := p.GetState()
-	if currentState == StateIdle && !llm.IsAnaActivated(text) {
+	// SIMPLIFIED: Always require "Ana" keyword for every command
+	// Check if Ana is activated
+	if !llm.IsAnaActivated(text) {
 		p.log.Debug().Str("text", text).Msg("Ignoring transcription - Ana name not mentioned")
 		return
 	}
+
+	p.log.Info().Str("text", text).Msg("Ana detected - processing command")
 
 	if p.onTranscript != nil {
 		p.onTranscript(text)
@@ -527,7 +551,7 @@ func (p *Pipeline) processRecordedAudio(ctx context.Context) {
 		p.log.Error().Err(err).Msg("TTS failed")
 	}
 
-	// After processing a command, return to Listening state instead of Idle
-	// This keeps the session active for continuous interaction
-	p.setState(StateListening)
+	// SIMPLIFIED: Always return to Idle after processing
+	// User must say "Ana" again for next command
+	p.setState(StateIdle)
 }
