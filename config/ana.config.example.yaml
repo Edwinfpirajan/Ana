@@ -98,19 +98,38 @@ tts:
 # ─────────────────────────────────────────────────────────────────────────────
 twitch:
   enabled: true
-  client_id: ""                     # Tu Client ID de Twitch Developer Console
-  client_secret: ""                 # Tu Client Secret
+  client_id: "${TWITCH_CLIENT_ID}"
+  client_secret: "${TWITCH_CLIENT_SECRET}"
   redirect_uri: "http://localhost:3000/callback"
-  broadcaster_id: ""                # Tu ID de broadcaster (número)
-  
+  broadcaster_id: "${TWITCH_BROADCASTER_ID}"
+
   # Estos se llenan automáticamente después de autenticación OAuth
-  access_token: ""
-  refresh_token: ""
-  
+  access_token: "${TWITCH_ACCESS_TOKEN}"
+  refresh_token: "${TWITCH_REFRESH_TOKEN}"
+
   # Scopes necesarios:
   # - clips:edit (crear clips)
   # - channel:manage:broadcast (título, categoría)
   # - moderator:manage:banned_users (ban, timeout)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# KICK - Integración con Kick
+# ─────────────────────────────────────────────────────────────────────────────
+kick:
+  enabled: false
+  client_id: "${KICK_CLIENT_ID}"
+  client_secret: "${KICK_CLIENT_SECRET}"
+  redirect_uri: "http://localhost:3000/callback"
+  channel_id: "${KICK_CHANNEL_ID}"
+
+  # Estos se llenan automáticamente después de autenticación OAuth
+  access_token: "${KICK_ACCESS_TOKEN}"
+  refresh_token: "${KICK_REFRESH_TOKEN}"
+
+  # Scopes necesarios para Kick API:
+  # - clips:create (crear clips)
+  # - channel:update (título, categoría)
+  # - chat:moderate (ban, timeout)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OBS - Integración con OBS Studio

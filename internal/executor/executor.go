@@ -62,6 +62,12 @@ type Executor interface {
 	Close() error
 }
 
+// StatusProvider is an optional interface for executors that provide detailed status
+type StatusProvider interface {
+	// GetStatus returns detailed status information
+	GetStatus() string
+}
+
 // Registry holds all registered executors
 type Registry struct {
 	executors map[string]Executor

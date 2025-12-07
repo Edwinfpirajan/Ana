@@ -152,11 +152,18 @@ func (b *Brain) handleStatus(ctx context.Context, action llm.Action) (string, er
 	}
 
 	// Check executors
-	for _, actionName := range []string{"twitch", "obs", "music"} {
+	for _, actionName := range []string{"twitch", "obs", "music", "kick"} {
 		exec, ok := b.registry.Get(actionName)
-		if ok && exec.IsAvailable() {
+		if !ok {
+			continue
+		}
+
+		// Use detailed status if available
+		if statusProvider, ok := exec.(executor.StatusProvider); ok {
+			status = append(status, statusProvider.GetStatus())
+		} else if exec.IsAvailable() {
 			status = append(status, fmt.Sprintf("%s: conectado", actionName))
-		} else if ok {
+		} else {
 			status = append(status, fmt.Sprintf("%s: desconectado", actionName))
 		}
 	}

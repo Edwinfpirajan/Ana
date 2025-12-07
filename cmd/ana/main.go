@@ -65,7 +65,17 @@ func main() {
 	// Register executors
 	if cfg.Twitch.Enabled {
 		logger.Info("Registering Twitch executor")
-		// TODO: Initialize Twitch executor
+		twitchExecutor, err := executor.NewTwitchExecutor(cfg.Twitch)
+		if err != nil {
+			logger.Warn(fmt.Sprintf("Failed to initialize Twitch executor: %v", err))
+		} else {
+			brn.RegisterExecutor(twitchExecutor)
+			logger.Info("Twitch executor registered successfully")
+		}
+	}
+	if cfg.Kick.Enabled {
+		logger.Info("Registering Kick executor")
+		// TODO: Initialize Kick executor when API client is ready
 	}
 	if cfg.OBS.Enabled {
 		logger.Info("Registering OBS executor")

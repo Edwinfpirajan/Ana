@@ -12,6 +12,7 @@ type Config struct {
 	LLM     LLMConfig     `yaml:"llm" mapstructure:"llm"`
 	TTS     TTSConfig     `yaml:"tts" mapstructure:"tts"`
 	Twitch  TwitchConfig  `yaml:"twitch" mapstructure:"twitch"`
+	Kick    KickConfig    `yaml:"kick" mapstructure:"kick"`
 	OBS     OBSConfig     `yaml:"obs" mapstructure:"obs"`
 	Music   MusicConfig   `yaml:"music" mapstructure:"music"`
 	Sounds  SoundsConfig  `yaml:"sounds" mapstructure:"sounds"`
@@ -133,6 +134,17 @@ type TwitchConfig struct {
 	BroadcasterID string `yaml:"broadcaster_id" mapstructure:"broadcaster_id"`
 	AccessToken   string `yaml:"access_token" mapstructure:"access_token"`
 	RefreshToken  string `yaml:"refresh_token" mapstructure:"refresh_token"`
+}
+
+// KickConfig contains Kick integration settings
+type KickConfig struct {
+	Enabled      bool   `yaml:"enabled" mapstructure:"enabled"`
+	ClientID     string `yaml:"client_id" mapstructure:"client_id"`
+	ClientSecret string `yaml:"client_secret" mapstructure:"client_secret"`
+	RedirectURI  string `yaml:"redirect_uri" mapstructure:"redirect_uri"`
+	ChannelID    string `yaml:"channel_id" mapstructure:"channel_id"`
+	AccessToken  string `yaml:"access_token" mapstructure:"access_token"`
+	RefreshToken string `yaml:"refresh_token" mapstructure:"refresh_token"`
 }
 
 // OBSConfig contains OBS integration settings
