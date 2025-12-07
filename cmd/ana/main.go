@@ -10,6 +10,7 @@ import (
 	"github.com/anastreamer/ana/internal/audio"
 	"github.com/anastreamer/ana/internal/brain"
 	"github.com/anastreamer/ana/internal/config"
+	"github.com/anastreamer/ana/internal/executor"
 	"github.com/anastreamer/ana/internal/hotkey"
 	"github.com/anastreamer/ana/internal/llm"
 	"github.com/anastreamer/ana/internal/pipeline"
@@ -68,7 +69,13 @@ func main() {
 	}
 	if cfg.OBS.Enabled {
 		logger.Info("Registering OBS executor")
-		// TODO: Initialize OBS executor
+		obsExecutor, err := executor.NewOBSExecutor(cfg.OBS)
+		if err != nil {
+			logger.Warn(fmt.Sprintf("Failed to initialize OBS executor: %v", err))
+		} else {
+			brn.RegisterExecutor(obsExecutor)
+			logger.Info("OBS executor registered successfully")
+		}
 	}
 	if cfg.Music.Enabled {
 		logger.Info("Registering Music executor")

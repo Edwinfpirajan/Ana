@@ -39,7 +39,10 @@
       "Bash(cmd /c \"taskkill /IM ana.exe /F\")",
       "Bash(taskkill:*)",
       "Bash(cmd /c \"taskkill /PID 35808 /F & taskkill /PID 39924 /F & taskkill /PID 24560 /F\")",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(\"c:/Program Files/Go/bin/go.exe\" get github.com/andreykaipov/goobs)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
